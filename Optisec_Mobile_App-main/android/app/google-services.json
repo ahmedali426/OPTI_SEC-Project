@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "40812506568",
+    "project_id": "opti-sec",
+    "storage_bucket": "opti-sec.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:40812506568:android:214f25177af1b7e03b64fd",
+        "android_client_info": {
+          "package_name": "com.example.optisecapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCoH6HINmT8lEW0hTEFG-TMgra73ED-JKU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
