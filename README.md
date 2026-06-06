@@ -1,76 +1,116 @@
 # OPTI-SEC: Optimized Biometric Access Control Platform
 
+OPTI-SEC (Optimized Biometric Access Control System) is an enterprise-grade, multi-factor hardware security infrastructure designed to eliminate credential forgery, presentation attacks, and the lack of real-time administrative visibility inherent in traditional entry systems. Driven by an ESP32-S3 local system architecture, the platform mandates synchronous processing across three distinct verification matrices (PIN, Facial Liveness, and Biometric Fingerprint) before granting access.
+
+---
+
 ## 1. System Pipeline Architecture
 
 The system coordinates edge hardware logic, neural processing nodes, and database servers across a distributed multi-layer framework:
 
-```
 [ User Approaches Gate ]
-       │
-       ▼
- [ Phase 1: PIN Entry ] ──► ESP32-S3 Master ──► HTTP POST ──► .NET 9 Backend (Hash Check)
-                                                                    │
-                                                       ┌────────────┴────────────┐
-                                                       ▼                         ▼
-                                               [ Valid PIN ]             [ Duress PIN (9999) ]
-                                                       │                         │
-                                                       ▼                         ▼
-                                               [ Activate Camera ]       [ Normal Flow + Silent Alert ]
-                                                       │
-                                                       ▼
+│
+▼
+[ Phase 1: PIN Entry ] ──► ESP32-S3 Master ──► HTTP POST ──► .NET 9 Backend (Hash Check)
+│
+┌────────────┴────────────┐
+▼                         ▼
+[ Valid PIN ]             [ Duress PIN (9999) ]
+│                         │
+▼                         ▼
+[ Activate Camera ]       [ Normal Flow + Silent Alert ]
+│
+▼
 [ Phase 2: AI Face Check ] ──► ESP32-CAM ─────► HTTP POST ───────────────► AI Service Container
-                                                                                  │
-                                                                          (Liveness + Embeddings)
-                                                                                  │
-                                                                                  ▼
+│
+(Liveness + Embeddings)
+│
+▼
 [ Phase 3: Biometric Match ] ─► R307 UART Scan ─► HTTP POST ──► Backend Matcher ◄───┘
-                                                                   │
-                                                                   ▼
-                                                          [ Cross-Match Matrix ]
-                                                                   │
-                                                                   ▼
-                                                        [ Open Gate Relay LOW ]
-```
+│
+▼
+[ Cross-Match Matrix ]
+│
+▼
+[ Open Gate Relay LOW ]
+
 
 ### The Cross-Matching Logic Mathematical Vector
-To evaluate biometric cohesion and stop identity identity impersonation, the AI model generates a 128-dimensional floating point representation vector ($V_{live}$) compared directly via Euclidean Distance against the pre-enrolled user registry template array ($V_{stored}$):
+To evaluate biometric cohesion and stop identity impersonation, the AI microservice extracts facial features into a 128-dimensional floating-point representation vector ($V_{live}$). This vector is evaluated using Euclidean Distance against the pre-enrolled user registry template array ($V_{stored}$):
 
 $$d(V_{live}, V_{stored}) = \sqrt{\sum_{i=1}^{128} (V_{live, i} - V_{stored, i})^2}$$
 
-Access proceeds only if:
-$$\min(d) < 	au \quad 	ext{where } 	au = 0.50$$
+Access proceeds to the final biometric phase only if the minimum distance falls below the security threshold parameter:
+$$\min(d) < \tau \quad \text{where } \tau = 0.50$$
 
 ---
 
-## 2. Hardware Specification Matrix
+## 2. Hardware Specification & Pin Mapping
+
+The hardware subsystem utilizes a dual-core ESP32-S3 as the main controller, communicating with dedicated peripherals over UART, I2C, and digital General-Purpose Input/Output (GPIO) pins.
 
 | Peripheral Component | GPIO Protocol Pin | Logic Level | Operational Scope |
 | :--- | :--- | :--- | :--- |
-| **ESP32-S3 Core Dual-Core** | Central Core Master | 3.3V | Orchestrates local FSM state loops and Wi-Fi networks |
-| **R307 Optical Biometric** | GPIO16 (RX2), GPIO17 (TX2) | 3.3V (Strict) | Collects 512-byte fingerprint ridge matrices over UART |
-| **4x4 Matrix Keypad** | GPIO12, 13, 14, 27, 26, 33, 32 | 3.3V / 5V | Handles character collection with software debouncing |
-| **ESP32-CAM Processing Unit**| GPIO4 (Trigger), I2C Shared | 5V Supply | Captures VGA 640x480 compressed JPEGs upon trigger pulse |
-| **I2C 16x2 Textual LCD** | GPIO22 (SDA), GPIO23 (SCL) | 5V | Displays state text strings on address location `0x27` |
-| **2-Channel Relay Board** | GPIO18 (Gate Switch), GPIO25 | Active-LOW | Switches 12V Solenoid locks and high-output alarm buzzers |
-| **Laser Tripwire Barrier** | GPIO34 (Analog Read ADC) | 3.3V Divider | Perimeter perimeter protection. Triggers if `analogRead < 500` |
+| **ESP32-S3 Core** | Central Core Master | 3.3V | Orchestrates local Finite State Machine (FSM) loops, network handshake, and asynchronous HTTP client routines. |
+| **R307 Optical Biometric** | GPIO16 (RX2), GPIO17 (TX2) | 3.3V (Strict) | Collects 512-byte fingerprint ridge matrices over UART at 57600 baud rate. |
+| **4x4 Matrix Keypad** | GPIO12, 13, 14, 27, 26, 33, 32 | 3.3V / 5V | Handles user character collection with software debouncing algorithms. |
+| **ESP32-CAM Unit** | GPIO4 (Trigger), I2C Shared | 5V Supply | Captures VGA 640x480 compressed JPEGs upon hardware trigger pulse from the master core. |
+| **I2C 16x2 Textual LCD** | GPIO22 (SDA), GPIO23 (SCL) | 5V | Displays real-time state text strings on address location `0x27`. |
+| **Laser Tripwire Barrier** | GPIO34 (Analog Read ADC) | 3.3V Divider | Perimeter perimeter protection loop; triggers breach alert if `analogRead < 500`. |
+| **2-Channel Relay Board** | GPIO18 (Gate Switch), GPIO25 | Active-LOW | Switches 12V Solenoid locks and high-output physical alarm buzzers. |
 
 ---
 
-## 3. Docker Container Configuration Layout
+## 3. Subsystem Software Deep Dive
 
-The backend infrastructure is containerized as an isolated multi-container architecture using Docker Compose:
+### AI Microservice & Presentation Attack Detection (PAD)
+The computer vision subsystem runs on a containerized FastAPI application. It features a deep learning model trained to detect presentation attacks (spoofing via printed photos, masks, or digital screens).
+* **Liveness Analysis**: Employs a custom ResNet-based binary classifier that analyzes micro-textures of the captured skin surface to distinguish between a real human face and a spoofing medium.
+* **Database Differentiation**: Images processed by the AI system are dynamically sorted and logged into separate storage schemas. Verified profiles are registered under the `Authorized` database table, while failed verification attempts or unknown faces trigger entries into the `Unauthorized` table for auditing.
 
-*   **smart-gate-backend** (`mcr.microsoft.com/dotnet/aspnet:9.0`): Listens on Host Port `5000`. Drives core API routes.
-*   **smart-gate-ai** (`python:3.11-slim`): Listens on Internal Port `8000`. Runs FastAPI server executing facial embeddings.
-*   **smart-gate-db** (`mcr.microsoft.com/mssql/server:2022`): Relational DB hidden from public network interfaces.
+### .NET 9.0 Core Web API Backend
+The enterprise layer is structured using Clean Architecture principles, ensuring strict separation of concerns across Domain, Application, Infrastructure, and Presentation layers.
+* **Security Mechanisms**: Password PINs are salted and hashed using Argon2id before database verification.
+* **Silent Duress Protocol**: If a user inputs the emergency override PIN (`9999`), the system triggers Case 3 execution logic. The physical gate opens normally to prevent hostage escalation or danger to the user, while the backend immediately despatches a hidden background notification to administrative mobile devices.
+* **Asynchronous Processing**: Intensive operations such as log generation and transaction archival are offloaded using Hangfire background workers.
 
-### Multi-Container Boot Orchestration Diagram
+### Flutter Mobile Application
+The client subsystem is a cross-platform mobile application driven by the BLoC (Business Logic Component) pattern for predictive state management.
+* **Role-Based Access Control (RBAC)**: Splits workflows into Admin and Client interfaces. Admins can view access logs, manage user enrollments, and manually override gate locks.
+* **Real-time Synchronization**: Connects to Firebase Realtime Database to receive instantaneous security breach alerts and stream network state logs.
+
+---
+
+## 4. Web API Endpoints Mapping
+
+### Authentication & Gateways
+* `POST /api/v1/auth/verify-pin`
+    * Description: Receives and validates the hashed 4x4 keypad input sequence. Triggers Silent Duress flow if code matches emergency parameters.
+* `POST /api/v1/biometrics/face-check`
+    * Description: Processes incoming multi-part form data containing the captured image from the ESP32-CAM. Communicates internally with the AI FastAPI container.
+* `POST /api/v1/biometrics/verify-fingerprint`
+    * Description: Concludes cross-matching logic by checking the retrieved R307 character buffer token against relational entity keys.
+
+### Administrative Controls
+* `GET /api/v1/admin/logs/authorized`
+    * Description: Fetches paginated tracking records of validated entry events.
+* `GET /api/v1/admin/logs/unauthorized`
+    * Description: Fetches flagged threat profiles, matching timestamps, and associated images captured during failed access attempts.
+* `POST /api/v1/admin/gate/override`
+    * Description: Forces a remote state change to trigger manual relay operation from the mobile application.
+
+---
+
+## 5. Docker Container Configuration Layout
+
+The entire platform deployment suite is orchestrated using Docker Compose to ensure isolation, security, and reproducible builds across staging and production environments:
+
 ```yaml
 version: '3.8'
 
 services:
   smart-gate-db:
-    image: mcr.microsoft.com/mssql/server:2022
+    image: [mcr.microsoft.com/mssql/server:2022](https://mcr.microsoft.com/mssql/server:2022)
     environment:
       - SA_PASSWORD=YourSecure_SA_Pass123!
       - ACCEPT_EULA=Y
@@ -103,44 +143,50 @@ services:
 volumes:
   mssql_data:
   shared_images:
-```
+6. Local Execution & Deployment Guide
+Embedded Firmware Compilation
+Load esp32FinalCode/esp32FinalCode.ino inside the Arduino IDE.
 
----
+Ensure that the Espressif Board Manager framework version 3.x is active.
 
-## 4. Local Execution & Deployment Guide
+Include required drivers: Adafruit_Fingerprint.h, LiquidCrystal_I2C.h, and ArduinoJson.h.
 
-### Embedded Firmware Compilation
-1. Load `esp32FinalCode/esp32FinalCode.ino` inside the Arduino IDE.
-2. Validate that the Espressif Board Manager framework version `3.x` is active.
-3. Include required drivers: `Adafruit_Fingerprint.h`, `LiquidCrystal_I2C.h`, and `ArduinoJson.h`.
-4. Adjust `WIFI_SSID` and `BACKEND_URL` application settings inside the configuration segment.
-5. Compile and flash onto the target ESP32-S3 hardware.
+Adjust WIFI_SSID and BACKEND_URL application settings inside the configuration segment.
 
-### Full Multi-Container Stack Initialization
+Compile and flash onto the target ESP32-S3 hardware.
+
+Full Multi-Container Stack Initialization
 Execute the unified build and startup parameter via the repository root directory:
-```bash
+
+Bash
 docker-compose up --build -d
-```
 Verify container verification metrics by running:
-```bash
+
+Bash
 docker ps
-```
+7. Graduation Project Engineering Team
+Developed as a partial fulfillment of the Bachelor's Degree requirements in Computer Science & Information Technology at South Valley University, Faculty of Computers and Information (June 2026).
 
----
+Ahmed Ali (AI Engineering & Embedded Architecture Lead)
 
-## 5. Graduation Project Engineering Team
-Developed as a partial fulfillment of the Bachelor's Degree requirements in Computer Science & Information Technology at **South Valley University, Faculty of Computers and Information (June 2026)**.
+Sama Ahmed (Information Technology)
 
-*   **Ahmed Ali** (AI Engineering & Embedded Architecture Lead)
-*   **Sama Ahmed** (Information Technology)
-*   **Ahmed Gamal** (Information Technology)
-*   **Salma Abd-EL-Rehiem** (Information Technology)
-*   **Ahmed Ibrahim** (Information Technology)
-*   **Alaa Ahmed** (Computer Science)
-*   **Ahmed Mostafa** (Information Technology)
-*   **Shahd Mohamed** (Information Technology)
-*   **Marwa Hassan** (Computer Science)
+Ahmed Gamal (Information Technology)
 
-**Under the Academic Supervision of:**
-*   **Dr. Amal Rashed** (Assistant Professor)
-*   **Dr. Eman** (Assistant Teacher)
+Salma Abd-EL-Rehiem (Information Technology)
+
+Ahmed Ibrahim (Information Technology)
+
+Alaa Ahmed (Computer Science)
+
+Ahmed Mostafa (Information Technology)
+
+Shahd Mohamed (Information Technology)
+
+Marwa Hassan (Computer Science)
+
+Under the Academic Supervision of:
+
+Dr. Amal Rashed (Assistant Professor)
+
+Dr. Eman (Assistant Teacher)
