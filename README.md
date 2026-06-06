@@ -170,7 +170,7 @@ docker ps
 
 ## 7. Graduation Project Engineering Team
 
-Developed as a partial fulfillment of the Bachelor's Degree requirements in Computer Science & Information Technology at **South Valley University, Faculty of Computers and Information (June 2026)**.
+Developed as a partial fulfillment of the Bachelor's Degree requirements in Computer Science & Information Technology at **Qena University, Faculty of Computers and Information (June 2026)**.
 
 * **Ahmed Ali** (AI Engineer & Integration and MLOps Engineer & Embedded Architecture)
 * **Sama Ahmed** (Embedded Architecture)
