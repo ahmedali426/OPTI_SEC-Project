@@ -1,0 +1,31 @@
+# Hardware Output
+esp32FinalCode/build/
+*.hex
+*.bin
+
+# AI Libraries & Weights
+AI/__pycache__/
+AI/venv/
+AI/.venv/
+AI/dataset/
+AI/trained_faces.pkl
+AI/face_recognition_models/shape_predictor_68_face_landmarks.dat
+
+# CRITICAL SECURITY RECOGNITION (حماية السيرفر والمفاتيح)
+AI/ServiceAccountKey.json
+**/appsettings.Development.json
+**/appsettings.json
+*.pem
+*.key
+
+# .NET 9.0 Backend Compilations
+[Bb]in/
+[Oo]bj/
+.vs/
+
+# Flutter Mobile Build Outputs
+.dart_tool/
+.packages
+.pub-cache/
+Optisec_Mobile_App-main/build/
+*.apk
