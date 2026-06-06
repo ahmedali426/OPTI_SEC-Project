@@ -10,27 +10,35 @@ The system coordinates edge hardware logic, neural processing nodes, and databas
 [ User Approaches Gate ]
 │
 ▼
+
 [ Phase 1: PIN Entry ] ──► ESP32-S3 Master ──► HTTP POST ──► .NET 9 Backend (Hash Check)
 │
+
 ┌────────────┴────────────┐
 ▼                         ▼
+
 [ Valid PIN ]             [ Duress PIN (9999) ]
 │                         │
 ▼                         ▼
+
 [ Activate Camera ]       [ Normal Flow + Silent Alert ]
 │
 ▼
+
 [ Phase 2: AI Face Check ] ──► ESP32-CAM ─────► HTTP POST ───────────────► AI Service Container
 │
 (Liveness + Embeddings)
 │
 ▼
+
 [ Phase 3: Biometric Match ] ─► R307 UART Scan ─► HTTP POST ──► Backend Matcher ◄───┘
 │
 ▼
+
 [ Cross-Match Matrix ]
 │
 ▼
+
 [ Open Gate Relay LOW ]
 
 ### The Cross-Matching Logic Mathematical Vector
@@ -164,15 +172,15 @@ docker ps
 
 Developed as a partial fulfillment of the Bachelor's Degree requirements in Computer Science & Information Technology at **South Valley University, Faculty of Computers and Information (June 2026)**.
 
-* **Ahmed Ali** (AI Engineering & Embedded Architecture Lead)
+* **Ahmed Ali** (AI Engineer & Integration and MLOps Engineer & Embedded Architecture)
 * **Sama Ahmed** (Embedded Architecture)
-* **Ahmed Gamal** (Information Technology)
-* **Salma Abd-EL-Rehiem** (Information Technology)
-* **Ahmed Ibrahim** (Information Technology)
-* **Alaa Ahmed** (Computer Science)
-* **Ahmed Mostafa** (Embedded Architecture Lead & Designer)
+* **Ahmed Gamal** (UI/UX Designer)
+* **Salma Abd-EL-Rehiem** (AI Engineer)
+* **Ahmed Ibrahim** (Backend Developer)
+* **Alaa Ahmed** (Mobile Developer)
+* **Ahmed Mostafa** (Embedded Architecture Lead)
 * **Shahd Mohamed** (Embedded Architecture)
-* **Marwa Hassan** (Computer Science)
+* **Marwa Hassan** (Mobile Developer)
 
 **Under the Academic Supervision of:**
 * **Dr. Amal Rashed** (Assistant Professor)
