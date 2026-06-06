@@ -7,7 +7,6 @@ OPTI-SEC (Optimized Biometric Access Control System) is an enterprise-grade, mul
 ## 1. System Pipeline Architecture
 
 The system coordinates edge hardware logic, neural processing nodes, and database servers across a distributed multi-layer framework:
-
 [ User Approaches Gate ]
 │
 ▼
@@ -34,7 +33,6 @@ The system coordinates edge hardware logic, neural processing nodes, and databas
 ▼
 [ Open Gate Relay LOW ]
 
-
 ### The Cross-Matching Logic Mathematical Vector
 To evaluate biometric cohesion and stop identity impersonation, the AI microservice extracts facial features into a 128-dimensional floating-point representation vector ($V_{live}$). This vector is evaluated using Euclidean Distance against the pre-enrolled user registry template array ($V_{stored}$):
 
@@ -56,7 +54,7 @@ The hardware subsystem utilizes a dual-core ESP32-S3 as the main controller, com
 | **4x4 Matrix Keypad** | GPIO12, 13, 14, 27, 26, 33, 32 | 3.3V / 5V | Handles user character collection with software debouncing algorithms. |
 | **ESP32-CAM Unit** | GPIO4 (Trigger), I2C Shared | 5V Supply | Captures VGA 640x480 compressed JPEGs upon hardware trigger pulse from the master core. |
 | **I2C 16x2 Textual LCD** | GPIO22 (SDA), GPIO23 (SCL) | 5V | Displays real-time state text strings on address location `0x27`. |
-| **Laser Tripwire Barrier** | GPIO34 (Analog Read ADC) | 3.3V Divider | Perimeter perimeter protection loop; triggers breach alert if `analogRead < 500`. |
+| **Laser Tripwire Barrier** | GPIO34 (Analog Read ADC) | 3.3V Divider | Perimeter protection loop; triggers breach alert if `analogRead < 500`. |
 | **2-Channel Relay Board** | GPIO18 (Gate Switch), GPIO25 | Active-LOW | Switches 12V Solenoid locks and high-output physical alarm buzzers. |
 
 ---
@@ -69,15 +67,15 @@ The computer vision subsystem runs on a containerized FastAPI application. It fe
 * **Database Differentiation**: Images processed by the AI system are dynamically sorted and logged into separate storage schemas. Verified profiles are registered under the `Authorized` database table, while failed verification attempts or unknown faces trigger entries into the `Unauthorized` table for auditing.
 
 ### .NET 9.0 Core Web API Backend
-The enterprise layer is structured using Clean Architecture principles, ensuring strict separation of concerns across Domain, Application, Infrastructure, and Presentation layers.
+The enterprise layer is structured using Clean Architecture principles, ensuring strict separation of concerns across Domain, Application, Infrastructure, and Presentation layers[cite: 1].
 * **Security Mechanisms**: Password PINs are salted and hashed using Argon2id before database verification.
-* **Silent Duress Protocol**: If a user inputs the emergency override PIN (`9999`), the system triggers Case 3 execution logic. The physical gate opens normally to prevent hostage escalation or danger to the user, while the backend immediately despatches a hidden background notification to administrative mobile devices.
-* **Asynchronous Processing**: Intensive operations such as log generation and transaction archival are offloaded using Hangfire background workers.
+* **Silent Duress Protocol**: If a user inputs the emergency override PIN (`9999`), the system triggers Case 3 execution logic[cite: 1]. The physical gate opens normally to prevent hostage escalation or danger to the user, while the backend immediately despatches a hidden background notification to administrative mobile devices[cite: 1].
+* **Asynchronous Processing**: Intensive operations such as log generation and transaction archival are offloaded using Hangfire background workers[cite: 1].
 
 ### Flutter Mobile Application
-The client subsystem is a cross-platform mobile application driven by the BLoC (Business Logic Component) pattern for predictive state management.
-* **Role-Based Access Control (RBAC)**: Splits workflows into Admin and Client interfaces. Admins can view access logs, manage user enrollments, and manually override gate locks.
-* **Real-time Synchronization**: Connects to Firebase Realtime Database to receive instantaneous security breach alerts and stream network state logs.
+The client subsystem is a cross-platform mobile application driven by the BLoC (Business Logic Component) pattern for predictive state management[cite: 1].
+* **Role-Based Access Control (RBAC)**: Splits workflows into Admin and Client interfaces[cite: 1]. Admins can view access logs, manage user enrollments, and manually override gate locks[cite: 1].
+* **Real-time Synchronization**: Connects to Firebase Realtime Database to receive instantaneous security breach alerts and stream network state logs[cite: 1].
 
 ---
 
@@ -85,25 +83,25 @@ The client subsystem is a cross-platform mobile application driven by the BLoC (
 
 ### Authentication & Gateways
 * `POST /api/v1/auth/verify-pin`
-    * Description: Receives and validates the hashed 4x4 keypad input sequence. Triggers Silent Duress flow if code matches emergency parameters.
+    * Description: Receives and validates the hashed 4x4 keypad input sequence[cite: 1]. Triggers Silent Duress flow if code matches emergency parameters[cite: 1].
 * `POST /api/v1/biometrics/face-check`
-    * Description: Processes incoming multi-part form data containing the captured image from the ESP32-CAM. Communicates internally with the AI FastAPI container.
+    * Description: Processes incoming multi-part form data containing the captured image from the ESP32-CAM[cite: 1]. Communicates internally with the AI FastAPI container[cite: 1].
 * `POST /api/v1/biometrics/verify-fingerprint`
-    * Description: Concludes cross-matching logic by checking the retrieved R307 character buffer token against relational entity keys.
+    * Description: Concludes cross-matching logic by checking the retrieved R307 character buffer token against relational entity keys[cite: 1].
 
 ### Administrative Controls
 * `GET /api/v1/admin/logs/authorized`
-    * Description: Fetches paginated tracking records of validated entry events.
+    * Description: Fetches paginated tracking records of validated entry events[cite: 1].
 * `GET /api/v1/admin/logs/unauthorized`
-    * Description: Fetches flagged threat profiles, matching timestamps, and associated images captured during failed access attempts.
+    * Description: Fetches flagged threat profiles, matching timestamps, and associated images captured during failed access attempts[cite: 1].
 * `POST /api/v1/admin/gate/override`
-    * Description: Forces a remote state change to trigger manual relay operation from the mobile application.
+    * Description: Forces a remote state change to trigger manual relay operation from the mobile application[cite: 1].
 
 ---
 
 ## 5. Docker Container Configuration Layout
 
-The entire platform deployment suite is orchestrated using Docker Compose to ensure isolation, security, and reproducible builds across staging and production environments:
+The entire platform deployment suite is orchestrated using Docker Compose to ensure isolation, security, and reproducible builds across staging and production environments[cite: 1]:
 
 ```yaml
 version: '3.8'
@@ -143,50 +141,40 @@ services:
 volumes:
   mssql_data:
   shared_images:
-6. Local Execution & Deployment Guide
-Embedded Firmware Compilation
-Load esp32FinalCode/esp32FinalCode.ino inside the Arduino IDE.
 
-Ensure that the Espressif Board Manager framework version 3.x is active.
+## 6. Local Execution & Deployment Guide
 
-Include required drivers: Adafruit_Fingerprint.h, LiquidCrystal_I2C.h, and ArduinoJson.h.
+### Embedded Firmware Compilation
+1. Load `esp32FinalCode/esp32FinalCode.ino` inside the Arduino IDE.
+2. Ensure that the Espressif Board Manager framework version `3.x` is active.
+3. Include required drivers: `Adafruit_Fingerprint.h`, `LiquidCrystal_I2C.h`, and `ArduinoJson.h`.
+4. Adjust `WIFI_SSID` and `BACKEND_URL` application settings inside the configuration segment.
+5. Compile and flash onto the target ESP32-S3 hardware.
 
-Adjust WIFI_SSID and BACKEND_URL application settings inside the configuration segment.
-
-Compile and flash onto the target ESP32-S3 hardware.
-
-Full Multi-Container Stack Initialization
+### Full Multi-Container Stack Initialization
 Execute the unified build and startup parameter via the repository root directory:
-
-Bash
+```bash
 docker-compose up --build -d
-Verify container verification metrics by running:
-
-Bash
 docker ps
-7. Graduation Project Engineering Team
-Developed as a partial fulfillment of the Bachelor's Degree requirements in Computer Science & Information Technology at South Valley University, Faculty of Computers and Information (June 2026).
+---
 
-Ahmed Ali (AI Engineering & Embedded Architecture Lead)
+### 📋 صندوق رقم 7 والأخير (انسخه والزقه في نهاية الملف تماماً):
 
-Sama Ahmed (Information Technology)
+```markdown
+## 7. Graduation Project Engineering Team
 
-Ahmed Gamal (Information Technology)
+Developed as a partial fulfillment of the Bachelor's Degree requirements in Computer Science & Information Technology at **South Valley University, Faculty of Computers and Information (June 2026)**.
 
-Salma Abd-EL-Rehiem (Information Technology)
+* **Ahmed Ali** (AI Engineering & Embedded Architecture Lead)
+* **Sama Ahmed** (Information Technology)
+* **Ahmed Gamal** (Information Technology)
+* **Salma Abd-EL-Rehiem** (Information Technology)
+* **Ahmed Ibrahim** (Information Technology)
+* **Alaa Ahmed** (Computer Science)
+* **Ahmed Mostafa** (Information Technology)
+* **Shahd Mohamed** (Information Technology)
+* **Marwa Hassan** (Computer Science)
 
-Ahmed Ibrahim (Information Technology)
-
-Alaa Ahmed (Computer Science)
-
-Ahmed Mostafa (Information Technology)
-
-Shahd Mohamed (Information Technology)
-
-Marwa Hassan (Computer Science)
-
-Under the Academic Supervision of:
-
-Dr. Amal Rashed (Assistant Professor)
-
-Dr. Eman (Assistant Teacher)
+**Under the Academic Supervision of:**
+* **Dr. Amal Rashed** (Assistant Professor)
+* **Dr. Eman** (Assistant Teacher)
