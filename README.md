@@ -142,6 +142,8 @@ volumes:
   mssql_data:
   shared_images:
 
+```
+
 ## 6. Local Execution & Deployment Guide
 
 ### Embedded Firmware Compilation
@@ -156,23 +158,20 @@ Execute the unified build and startup parameter via the repository root director
 ```bash
 docker-compose up --build -d
 docker ps
----
+```
 
-### 📋 صندوق رقم 7 والأخير (انسخه والزقه في نهاية الملف تماماً):
-
-```markdown
 ## 7. Graduation Project Engineering Team
 
 Developed as a partial fulfillment of the Bachelor's Degree requirements in Computer Science & Information Technology at **South Valley University, Faculty of Computers and Information (June 2026)**.
 
 * **Ahmed Ali** (AI Engineering & Embedded Architecture Lead)
-* **Sama Ahmed** (Information Technology)
+* **Sama Ahmed** (Embedded Architecture)
 * **Ahmed Gamal** (Information Technology)
 * **Salma Abd-EL-Rehiem** (Information Technology)
 * **Ahmed Ibrahim** (Information Technology)
 * **Alaa Ahmed** (Computer Science)
-* **Ahmed Mostafa** (Information Technology)
-* **Shahd Mohamed** (Information Technology)
+* **Ahmed Mostafa** (Embedded Architecture Lead & Designer)
+* **Shahd Mohamed** (Embedded Architecture)
 * **Marwa Hassan** (Computer Science)
 
 **Under the Academic Supervision of:**
